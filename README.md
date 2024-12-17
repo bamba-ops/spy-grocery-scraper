@@ -158,12 +158,3 @@ Contributions are welcome! Feel free to fork this repository, open issues, and s
 This project is licensed under the MIT License.
 
 ---
-
-## **Contact**  
-For inquiries or collaboration:  
-- **Name**: Your Full Name  
-- **Email**: your.email@example.com  
-- **LinkedIn**: [Your LinkedIn Profile](https://www.linkedin.com/)  
-- **GitHub**: [Your GitHub Profile](https://github.com/your-username)
-
----
