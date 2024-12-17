@@ -90,8 +90,8 @@ Ensure you have the following installed:
 
 ### **2. Clone the Repository**  
 ```bash
-git clone https://github.com/your-username/quebec-supermarket-scraper.git
-cd quebec-supermarket-scraper
+git clone https://github.com/bamba-ops/spy-grocery-scraper.git
+cd spy-grocery-scraper
 ```
 
 ### **3. Install Dependencies**  
