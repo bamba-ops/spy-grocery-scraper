@@ -1,0 +1,13 @@
+# Scraping
+playwright==1.37.0
+lxml==4.9.3
+
+# Gestion des bases de données (Supabase)
+supabase==0.0.7
+python-dotenv==1.0.0
+
+# JSON et manipulation des fichiers
+jsonschema==4.19.0
+
+# Autres utilitaires
+re==2.2.1
