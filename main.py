@@ -21,6 +21,13 @@ def main():
         if not supabase_client:
             raise ValueError("Invalid Supabase connection.")
         
+        # Test
+        #response = supabase_client.table("prices").select("*").eq("id", "bba875c1-9b9a-4413-b489-cd79e4ada79f").execute()
+        #if response.data:
+        #    print(response.data[0])
+        #else:
+        #    print("Erreur")
+
         product_repo = ProductRepository(supabase_client)
         store_repo = StoreRepository(supabase_client)
         price_repo = PriceRepository(supabase_client)
