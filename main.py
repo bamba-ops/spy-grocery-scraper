@@ -3,6 +3,7 @@ from infrastructure.repositories.product_repository import ProductRepository
 from infrastructure.repositories.store_repository import StoreRepository
 from infrastructure.repositories.price_repository import PriceRepository
 from infrastructure.playwright.scraper import PlaywrightScraper
+from infrastructure.beautifulsoup.scraper import ScraperMetro
 from application.use_cases.scrape_prices import ScrapePrices
 from infrastructure.api.supabase_connexion import SupabaseConnection
 
@@ -35,8 +36,8 @@ def main():
         logger.info("Repositories initialized successfully.")
         
         # Initialize scraper
-        scraper = PlaywrightScraper()
-        logger.info("Playwright scraper initialized.")
+        scraper = ScraperMetro()
+        logger.info("BeautifulScop scraper initialized.")
         
         # Use case: scrape prices
         scrape_prices_use_case = ScrapePrices(product_repo, store_repo, price_repo, scraper)
