@@ -8,7 +8,7 @@ class PlaywrightScraper:
         self.user_agents = load_user_agents(user_agent_file)
         self.headless = headless
 
-    def scrape_store(self, store_name: str, product_name: str):
+    def scrape_store(self, product_name: str):
         """
         Lance le scraping pour un magasin donné avec Playwright.
         """

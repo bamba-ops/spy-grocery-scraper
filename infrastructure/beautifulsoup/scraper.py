@@ -4,9 +4,9 @@ from ..playwright.handlers import handle_banner, handle_clean_text, handle_dialo
 
 class ScraperMetro:
 
-    def scrape_metro(self, product_name: str):
+    def scrape_metro(self, product_name: str, number_of_page: int):
         
-        PAGE_NUMBER = 1
+        PAGE_NUMBER = number_of_page
         i = 1
         scraped_data = []
         URL_MAIN = "https://www.metro.ca/epicerie-en-ligne"

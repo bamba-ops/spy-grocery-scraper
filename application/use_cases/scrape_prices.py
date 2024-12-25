@@ -5,7 +5,7 @@ class ScrapePrices:
         self.price_repo = price_repo
         self.scraper = scraper
 
-    def execute(self, product_name: str, store_name: str):
+    def execute(self, product_name: str, store_name: str, number_of_page: int):
         """
         Orchestration du scraping et sauvegarde des informations.
         """
@@ -16,7 +16,8 @@ class ScrapePrices:
                 raise ValueError(f"Magasin '{store_name}' introuvable.")
 
             # Scraping des données
-            scraped_data = self.scraper.scrape_metro(product_name)
+            scraped_data = self.scraper.scrape_metro(product_name, number_of_page)
+            #scraped_data = self.scraper.scrape_store(product_name)
             print(f"Scraping terminé. Produits récupérés : {len(scraped_data)}")
 
             # Enregistrement des données dans la base de données

@@ -6,7 +6,20 @@ from infrastructure.playwright.scraper import PlaywrightScraper
 from infrastructure.beautifulsoup.scraper import ScraperMetro
 from application.use_cases.scrape_prices import ScrapePrices
 from infrastructure.api.supabase_connexion import SupabaseConnection
+from fastapi import FastAPI
+from presentation.controllers.scrape_controller import router as scrape_router
 
+app = FastAPI()
+
+# Inclure les routes
+app.include_router(scrape_router, prefix="/api/v1")
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Scraper API is running!"}
+
+"""
 def main():
     setup_logging()
     
@@ -36,14 +49,14 @@ def main():
         logger.info("Repositories initialized successfully.")
         
         # Initialize scraper
-        scraper = ScraperMetro()
-        logger.info("BeautifulScop scraper initialized.")
+        #scraper = ScraperMetro()
+        logger.info("Scraper initialized.")
         
         # Use case: scrape prices
-        scrape_prices_use_case = ScrapePrices(product_repo, store_repo, price_repo, scraper)
+        #scrape_prices_use_case = ScrapePrices(product_repo, store_repo, price_repo, scraper)
         logger.info("Executing price scraping use case for 'banana' at 'metro'.")
         
-        scrape_prices_use_case.execute("banana", "metro")
+        #scrape_prices_use_case.execute("banana", "metro")
         logger.info("Scraping completed successfully.")
     
     except ValueError as ve:
@@ -55,3 +68,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
