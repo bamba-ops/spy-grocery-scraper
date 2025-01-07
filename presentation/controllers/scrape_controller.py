@@ -33,3 +33,4 @@ def scrape_product_metro(data: dict):
         return ScrapeService.scrape_product_metro(data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    

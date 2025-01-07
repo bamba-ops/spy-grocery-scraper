@@ -2,7 +2,7 @@ from infrastructure.repositories.product_repository import ProductRepository
 from infrastructure.repositories.store_repository import StoreRepository
 from infrastructure.repositories.price_repository import PriceRepository
 from infrastructure.playwright.scraper import PlaywrightScraper
-from infrastructure.beautifulsoup.scraper import ScraperMetro
+from infrastructure.beautifulsoup.scraper import Scraper
 from application.use_cases.scrape_prices import ScrapePrices
 from infrastructure.api.supabase_connexion import SupabaseConnection
 
@@ -15,17 +15,23 @@ class ScrapeService:
 
     @staticmethod
     def scrape_product(data: dict):
-        product_name = data.get("name")
-        product_brand = data.get("brand")
-        
-        if not product_name and not product_brand:
-            return {'error': "Either 'name' or 'brand' is required"}
-        
-        # Déterminer le type de recherche
-        search_type = "name" if product_name else "brand"
-        search_value = product_name if product_name else product_brand
+        product_name = data.get("product_name")
+        store_name = data.get("store_name")
+        number_of_page = data.get("number_of_page")
 
-        return {"message": f"Scraping completed for {search_type}: {search_value}"}
+        if not product_name and not store_name:
+            return {'error': "The both 'product_name' and 'store_name' is required"}
+
+        scraper = Scraper()
+
+        scraper_prices_use_case = ScrapePrices(ScrapeService.product_repo, ScrapeService.store_repo, ScrapeService.price_repo, scraper)
+
+        data = scraper_prices_use_case.execute(product_name, store_name, number_of_page)
+
+        if(data == []):
+            return {"status": "error", "message": "No data scraped"}
+        
+        return {"status": "success", "message": f"Scraping completed for {product_name} in {store_name}", "data": data}
     
     @staticmethod
     def scrape_product_metro(data: dict):
@@ -36,10 +42,13 @@ class ScrapeService:
         if not product_name and not store_name:
             return {'error': "The both 'product_name' and 'store_name' is required"}
 
-        scraper = ScraperMetro()
+        scraper = Scraper()
 
         scraper_prices_use_case = ScrapePrices(ScrapeService.product_repo, ScrapeService.store_repo, ScrapeService.price_repo, scraper)
 
-        scraper_prices_use_case.execute(product_name, store_name, number_of_page)
+        data = scraper_prices_use_case.execute(product_name, store_name, number_of_page)
 
-        return {"message": f"Scraping completed for {product_name} in {store_name}"}
+        if(data == []):
+            return {"status": "error", "message": "No data scraped"}
+        
+        return {"status": "success", "message": f"Scraping completed for {product_name} in {store_name}", "data": data}

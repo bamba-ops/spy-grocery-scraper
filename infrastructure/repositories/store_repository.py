@@ -10,8 +10,7 @@ class StoreRepository:
             response = self.supabase.table("stores").select("*").eq("name", name).execute()
             if response.data:
                 return response.data[0]
-            else:
-                print(f"Magasin '{name}' non trouvé.")
+            return []
         except Exception as e:
             print(f"Erreur lors de la récupération du magasin : {e}")
             raise
@@ -25,8 +24,7 @@ class StoreRepository:
             if response.data:
                 print("Magasin inséré avec succès :", response.data)
                 return response.data[0]
-            else:
-                print("Erreur d'insertion :", response.errors)
+            return []
         except Exception as e:
             print(f"Erreur lors de l'insertion du magasin : {e}")
             raise

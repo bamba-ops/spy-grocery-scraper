@@ -11,8 +11,7 @@ class PriceRepository:
             if response.data:
                 print("Prix inséré avec succès :", response.data)
                 return response.data[0]
-            else:
-                print("Erreur d'insertion :", response.errors)
+            return []
         except Exception as e:
             print(f"Erreur lors de l'insertion du prix : {e}")
             raise
@@ -23,7 +22,9 @@ class PriceRepository:
         """
         try:
             response = self.supabase.table("prices").select("*").eq("product_id", product_id).execute()
-            return response.data
+            if response.data:
+                return response.data
+            return []
         except Exception as e:
             print(f"Erreur lors de la récupération des prix : {e}")
             raise
@@ -41,8 +42,22 @@ class PriceRepository:
             if response.data:
                 print("Prix mis à jour avec succès :", response.data)
                 return response.data[0]
-            else:
-                print("Erreur lors de la mise à jour :", response.errors)
+            return []
         except Exception as e:
             print(f"Erreur lors de la mise à jour du prix : {e}")
+            raise
+        
+    def get_price_by_product_and_store(self, store_id: str, product_id: str):
+        try:
+            response = self.supabase.table("prices") \
+                .select('*') \
+                .eq("store_id", store_id) \
+                .eq("product_id", product_id) \
+                .execute()
+            if response.data:
+                print("Prix par produit id et magasin id récupéré avec success :", response.data)
+                return response.data[0]
+            return []
+        except Exception as e:
+            print(f"Erreur lors de la récupération : {e}")
             raise
