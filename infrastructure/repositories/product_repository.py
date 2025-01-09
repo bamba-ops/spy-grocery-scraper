@@ -1,3 +1,6 @@
+from fastapi import HTTPException
+
+
 class ProductRepository:
     def __init__(self, supabase_client):
         self.supabase = supabase_client
@@ -13,8 +16,9 @@ class ProductRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de l'insertion du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors de l'insértion du produit : {e}"
+            )
 
     def get_product_by_name(self, name: str):
         """
@@ -28,8 +32,10 @@ class ProductRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de la récupération du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du produit par son nom : {e}",
+            )
 
     def get_product_by_image_url(self, image_url: str):
 
@@ -44,8 +50,10 @@ class ProductRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de la récupération du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du produit par son image url : {e}",
+            )
 
     def update_product_by_name(self, name: str, updates: dict):
         """
@@ -63,8 +71,10 @@ class ProductRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de la mise à jour du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la mise à jour du produit par son nom : {e}",
+            )
 
     def delete_product_by_name(self, name: str):
         """
@@ -79,8 +89,10 @@ class ProductRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de la suppression du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la suppréssion du produit par son nom : {e}",
+            )
 
     def get_product_by_reference_id(self, reference_id: str):
         """
@@ -97,8 +109,10 @@ class ProductRepository:
                 return response.data
             return []
         except Exception as e:
-            print(f"Erreur lors de la récupération du produit : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du produit par son reference id : {e}",
+            )
 
     def lowercase_dict_values(self, data):
         """
@@ -123,3 +137,16 @@ class ProductRepository:
             return data.lower()
         else:
             return data
+
+    def is_name_exist(self, product_name):
+        try:
+            response = self.get_product_by_name(product_name)
+            if response:
+                return True
+            else:
+                return False
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la vérification si le nom existe du produit : {e}",
+            )

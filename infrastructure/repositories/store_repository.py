@@ -1,3 +1,6 @@
+from fastapi import HTTPException
+
+
 class StoreRepository:
     def __init__(self, supabase_client):
         self.supabase = supabase_client
@@ -7,13 +10,17 @@ class StoreRepository:
         Récupère un magasin par son nom.
         """
         try:
-            response = self.supabase.table("stores").select("*").eq("name", name).execute()
+            response = (
+                self.supabase.table("stores").select("*").eq("name", name).execute()
+            )
             if response.data:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de la récupération du magasin : {e}")
-            raise
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du magasin par son nom : {e}",
+            )
 
     def create_store(self, store_data: dict):
         """
@@ -26,5 +33,6 @@ class StoreRepository:
                 return response.data[0]
             return []
         except Exception as e:
-            print(f"Erreur lors de l'insertion du magasin : {e}")
-            raise
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors de la création du magasin : {e}"
+            )

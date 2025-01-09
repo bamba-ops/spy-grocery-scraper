@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup
+from infrastructure.interfaces.scraper_interface import IScraper
+from fastapi import HTTPException
 from ..api.scrapingbee import ScrapingBee
 from ..playwright.handlers import (
     handle_banner,
@@ -12,7 +14,7 @@ from ..playwright.handlers import (
 )
 
 
-class Scraper:
+class Scraper(IScraper):
 
     def scrape_iga(self, product_name: str):
 
@@ -32,7 +34,9 @@ class Scraper:
                 )
             )
         except Exception as e:
-            print(f"Erreur lors du scraping : {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors du scrapping : {e}"
+            )
 
         return scraped_data
 
@@ -70,7 +74,9 @@ class Scraper:
                     )
 
             except Exception as e:
-                print(f"Erreur lors du scraping : {e}")
+                raise HTTPException(
+                    status_code=500, detail=f"Erreur lors du scrapping : {e}"
+                )
             finally:
                 i = i + 1
 

@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+from fastapi import HTTPException
 
 
 class ScrapingBee:
@@ -41,5 +42,6 @@ class ScrapingBee:
                 print(f"Code {response.status_code} pendant la requête")
 
         except Exception as e:
-            print(f"Erreur lors de la requête à ScrapingBee : {e}")
-            raise
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors de la requête à ScrapingBee : {e}"
+            )
