@@ -35,13 +35,15 @@ class ScrapingBee:
 
             # print('Response HTTP Status Code: ', response.status_code)
             # print('Response HTTP Response Body: ', response.content)
-            if response.status_code == 200:
-                content_str = response.content.decode("utf-8")
-                return content_str
-            else:
-                print(f"Code {response.status_code} pendant la requête")
 
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Erreur lors de la requête à ScrapingBee : {e}"
             )
+        finally:
+            if response.status_code == 200:
+                content_str = response.content.decode("utf-8")
+                return content_str
+            else:
+                print(f"Code {response.status_code} pendant la requête")
+                return ""

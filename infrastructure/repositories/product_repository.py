@@ -37,6 +37,27 @@ class ProductRepository:
                 detail=f"Erreur lors de la récupération du produit par son nom : {e}",
             )
 
+    def get_product_by_name_and_store_id(self, name: str, store_id: str):
+        """
+        Récupère un produit par son nom.
+        """
+        try:
+            response = (
+                self.supabase.table("products")
+                .select("*")
+                .eq("name", name)
+                .eq("store_id", store_id)
+                .execute()
+            )
+            if response.data:
+                return response.data[0]
+            return []
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du produit par son nom : {e}",
+            )
+
     def get_product_by_image_url(self, image_url: str):
 
         try:
@@ -94,6 +115,28 @@ class ProductRepository:
                 detail=f"Erreur lors de la suppréssion du produit par son nom : {e}",
             )
 
+    def get_product_by_name_by_store_id(self, name: str, store_id: str):
+        """
+        Supprime un produit par son nom.
+        """
+        try:
+            response = (
+                self.supabase.table("products")
+                .select("*")
+                .eq("name", name)
+                .eq("store_id", store_id)
+                .execute()
+            )
+            if response.data:
+                print("Produit supprimé :", response.data)
+                return response.data[0]
+            return []
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la suppréssion du produit par son nom : {e}",
+            )
+
     def get_product_by_reference_id(self, reference_id: str):
         """
         Récupère un produit par son nom.
@@ -103,6 +146,26 @@ class ProductRepository:
                 self.supabase.table("products")
                 .select("*")
                 .eq("reference_id", reference_id)
+                .execute()
+            )
+            if response.data:
+                return response.data
+            return []
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur lors de la récupération du produit par son reference id : {e}",
+            )
+
+    def get_product_by_reference_id_and_store_id(
+        self, reference_id: str, store_id: str
+    ):
+        try:
+            response = (
+                self.supabase.table("products")
+                .select("*")
+                .eq("reference_id", reference_id)
+                .eq("store_id", store_id)
                 .execute()
             )
             if response.data:
@@ -138,9 +201,9 @@ class ProductRepository:
         else:
             return data
 
-    def is_name_exist(self, product_name):
+    def is_name_exist(self, product_name, store_id):
         try:
-            response = self.get_product_by_name(product_name)
+            response = self.get_product_by_name_and_store_id(product_name, store_id)
             if response:
                 return True
             else:

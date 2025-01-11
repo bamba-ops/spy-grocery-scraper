@@ -11,10 +11,32 @@ from ..playwright.handlers import (
     handle_standardize_units,
     handle_extract_prices_metro,
     handle_standardize_units_metro,
+    handle_extract_prices_metro_2,
+    handle_standardize_units_2,
 )
 
 
 class Scraper(IScraper):
+
+    def scrape_superc(self, product_name: str):
+        URL_MAIN = "https://www.superc.ca/recherche?filter=" + product_name
+        print(URL_MAIN)
+        scraped_data = []
+        try:
+            scraped_data.extend(
+                self.extract_info_superc(
+                    ScrapingBee.get_html_content_from_url(
+                        URL_MAIN,
+                        "#content-temp > div > div.product-page-filter > div:nth-child(3) > div",
+                    )
+                )
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors du scrapping : {e}"
+            )
+
+        return scraped_data
 
     def scrape_iga(self, product_name: str):
 
@@ -85,6 +107,7 @@ class Scraper(IScraper):
     def extract_info_iga(self, html_content):
         # Initialiser BeautifulSoup
         soup = BeautifulSoup(html_content, "html.parser")
+        print(html_content)
 
         # Liste pour stocker les informations des produits
         data = []
@@ -178,6 +201,70 @@ class Scraper(IScraper):
             pass
         return data
 
+    def extract_info_superc(self, html_content):
+        soup = BeautifulSoup(html_content, "html.parser")
+        print(html_content)
+        name_value = []
+        brand_value = []
+        unit_value = []
+        img_src = []
+        price_value = []
+        data = []
+
+        container = soup.select_one("div.products-search--grid.searchOnlineResults")
+        if not container:
+            print("Auncu produit trouvé")
+            return data
+
+        picture_elements = container.select("picture.defaultable-picture")
+        name_elements = container.select("div.content__head")
+        price_elements = container.select("div.pricing__secondary-price")
+
+        for name in name_elements:
+            _title_unit = name.select_one("a")
+            _brand = name.select_one("span")
+            if _brand or _title_unit:
+                name_value.append(handle_clean_text(_title_unit.text.strip()))
+                brand_value.append(handle_clean_text(_brand.text.strip()))
+                unit_value.append(
+                    handle_extract_unit_and_value(
+                        handle_clean_text(_title_unit.text.strip())
+                    )
+                )
+        for picture in picture_elements:
+            img = picture.select_one("img")
+            if img and img.get("src"):
+                img_src.append(img["src"])
+
+        for price in price_elements:
+            _price = price.select_one("span")
+            if _price:
+                price_value.append(handle_clean_text(_price.text.strip()))
+        if len(price_value) == len(name_value):
+            for name, brand, unit, img, price in zip(
+                name_value,
+                brand_value,
+                unit_value,
+                img_src,
+                handle_standardize_units_metro(
+                    handle_extract_prices_metro(price_value)
+                ),
+            ):
+                price["price"] = round(price["price"], 2)
+                data.append(
+                    {
+                        "name": name,
+                        "image_url": img,
+                        "brand": brand,
+                        "price": price,
+                        "unit": unit,
+                    }
+                )
+        else:
+            pass
+        # print(data)
+        return data
+
     def extract_info_metro(self, html_content):
         soup = BeautifulSoup(html_content, "html.parser")
 
@@ -214,23 +301,26 @@ class Scraper(IScraper):
                 img_src.append(img["src"])
 
         for price in price_elements:
+            # print(price.text)
             _price = price.select_one("span")
-            if _price:
-                price_value.append(handle_clean_text(_price.text.strip()))
+            # print(_price.text.strip())
+            price_value.append(price.text)
+
+        print(handle_standardize_units_2(handle_extract_prices_metro_2(price_value)))
 
         for name, brand, unit, img, price in zip(
             name_value,
             brand_value,
             unit_value,
             img_src,
-            handle_standardize_units_metro(handle_extract_prices_metro(price_value)),
+            handle_standardize_units_2(handle_extract_prices_metro_2(price_value)),
         ):
             print(
                 {
                     "name": name,
                     "brand": brand,
                     "unit": unit,
-                    img: "img",
+                    "image_url": img,
                     "price": price["price"],
                     "unit_price": price["unit"],
                 }

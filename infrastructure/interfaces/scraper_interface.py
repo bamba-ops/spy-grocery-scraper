@@ -9,3 +9,7 @@ class IScraper(ABC):
     @abstractmethod
     def scrape_iga(self, product_name: str):
         pass
+
+    @abstractmethod
+    def scrape_superc(self, product_name: str):
+        pass
