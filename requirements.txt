@@ -1,13 +1,15 @@
 # Scraping
 playwright==1.37.0
 lxml==4.9.3
+beautifulsoup4==4.12.2
 
 # Gestion des bases de données (Supabase)
-supabase==0.0.7
+supabase==1.0.3
 python-dotenv==1.0.0
+
+# API et Web
+fastapi==0.104.1
+uvicorn==0.23.2
 
 # JSON et manipulation des fichiers
 jsonschema==4.19.0
-
-# Autres utilitaires
-re==2.2.1
