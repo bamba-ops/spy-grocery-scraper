@@ -19,46 +19,85 @@ from ..playwright.handlers import (
 class Scraper(IScraper):
 
     def scrape_superc(self, product_name: str):
-        URL_MAIN = "https://www.superc.ca/recherche?filter=" + product_name
-        print(URL_MAIN)
         scraped_data = []
-        try:
-            scraped_data.extend(
-                self.extract_info_superc(
-                    ScrapingBee.get_html_content_from_url(
-                        URL_MAIN,
-                        "#content-temp > div > div.product-page-filter > div:nth-child(3) > div",
-                    )
-                )
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Erreur lors du scrapping : {e}"
-            )
 
+        # On va boucler tant qu'on ne trouve pas de résultat ou qu'on a plus de mots à enlever
+        while True:
+            URL_MAIN = "https://www.superc.ca/recherche?filter=" + product_name
+
+            try:
+                html_content = ScrapingBee.get_html_content_from_url(
+                    URL_MAIN,
+                    "#content-temp > div > div.product-page-filter > div:nth-child(3) > div",
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500, detail=f"Erreur lors du scrapping : {e}"
+                )
+
+            # Si le html_content est vide, on retire le dernier mot du product_name
+            if not html_content:
+                print("NEED TO BE LOOPED pour :", product_name)
+
+                # On scinde le nom du produit en mots
+                words = product_name.strip().split()
+
+                # Si on a plus d'un mot, on retire le dernier
+                if len(words) > 1:
+                    words.pop()
+                    product_name = " ".join(words)
+                else:
+                    # Si on est rendu à un seul mot et qu'on ne trouve toujours rien,
+                    # on arrête la recherche.
+                    print("Aucun résultat trouvé, même après suppression des mots.")
+                    break
+            else:
+                # Si on trouve quelque chose, on traite les données et on stoppe la boucle
+                scraped_data.extend(self.extract_info_superc(html_content))
+                break
         return scraped_data
 
     def scrape_iga(self, product_name: str):
-
-        URL_MAIN = (
-            "https://www.iga.net/fr/search?t={D9CE4CBE-C8C3-4203-A58B-7CF7B830880E}&k="
-            + product_name
-        )
-        print(URL_MAIN)
         scraped_data = []
-        try:
-            scraped_data.extend(
-                self.extract_info_iga(
-                    ScrapingBee.get_html_content_from_url(
-                        URL_MAIN,
-                        "#body_0_main_1_GrocerySearch_TemplateResult_SearchResultListView_ctrl0_ItemTemplatePanel_0 > div > div.item-product > div > div:nth-child(1) > div",
-                    )
+
+        # On va boucler tant qu'on ne trouve pas de résultat ou qu'on a plus de mots à enlever
+        while True:
+            # Construction de l'URL
+            URL_MAIN = (
+                "https://www.iga.net/fr/search?t={D9CE4CBE-C8C3-4203-A58B-7CF7B830880E}&k="
+                + product_name
+            )
+
+            try:
+                html_content = ScrapingBee.get_html_content_from_url(
+                    URL_MAIN,
+                    "#body_0_main_1_GrocerySearch_TemplateResult_SearchResultListView_ctrl0_ItemTemplatePanel_0 > div > div.item-product > div > div:nth-child(1) > div",
                 )
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Erreur lors du scrapping : {e}"
-            )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500, detail=f"Erreur lors du scrapping : {e}"
+                )
+
+            # Vérification si le contenu est vide
+            if not html_content:
+                print("NEED TO BE LOOPED pour :", product_name)
+
+                # On scinde le nom du produit en mots
+                words = product_name.strip().split()
+
+                # Si on a plus d'un mot, on retire le dernier
+                if len(words) > 1:
+                    words.pop()
+                    product_name = " ".join(words)
+                else:
+                    # Si on est rendu à un seul mot et qu'on ne trouve toujours rien,
+                    # on arrête la recherche.
+                    print("Aucun résultat trouvé, même après suppression des mots.")
+                    break
+            else:
+                # Si le contenu n'est pas vide, on ajoute à scraped_data et on stoppe la boucle
+                scraped_data.extend(self.extract_info_iga(html_content))
+                break
 
         return scraped_data
 
@@ -107,7 +146,7 @@ class Scraper(IScraper):
     def extract_info_iga(self, html_content):
         # Initialiser BeautifulSoup
         soup = BeautifulSoup(html_content, "html.parser")
-        print(html_content)
+        # print(html_content)
 
         # Liste pour stocker les informations des produits
         data = []
@@ -203,7 +242,7 @@ class Scraper(IScraper):
 
     def extract_info_superc(self, html_content):
         soup = BeautifulSoup(html_content, "html.parser")
-        print(html_content)
+        # print(html_content)
         name_value = []
         brand_value = []
         unit_value = []
@@ -306,7 +345,7 @@ class Scraper(IScraper):
             # print(_price.text.strip())
             price_value.append(price.text)
 
-        print(handle_standardize_units_2(handle_extract_prices_metro_2(price_value)))
+        # print(handle_standardize_units_2(handle_extract_prices_metro_2(price_value)))
 
         for name, brand, unit, img, price in zip(
             name_value,
@@ -315,6 +354,7 @@ class Scraper(IScraper):
             img_src,
             handle_standardize_units_2(handle_extract_prices_metro_2(price_value)),
         ):
+            """
             print(
                 {
                     "name": name,
@@ -325,6 +365,7 @@ class Scraper(IScraper):
                     "unit_price": price["unit"],
                 }
             )
+            """
             data.append(
                 {
                     "name": name,

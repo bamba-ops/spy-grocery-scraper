@@ -40,9 +40,6 @@ class ScrapePrices:
                 if not iga and not superc:
                     raise ValueError(f"Magasin '{action}' introuvable.")
 
-                print(iga)
-                print(superc)
-
                 data_from_iga = self._scrap_iga(product, iga)
                 # time.sleep(5)
                 data_from_superc = self._scrap_superc(product, superc)
@@ -51,9 +48,9 @@ class ScrapePrices:
                     oneData.append(data_from_iga)
                     oneData.append(data_from_superc)
                     self.product_repo.update_product_by_name(
-                        product["name"], {"is_scraped": True}
+                        product["name"], product["store_id"], {"is_scraped": True}
                     )
-                print(oneData)
+                # print(oneData)
                 return oneData
             else:
                 raise ValueError("Magasin non supporté")
@@ -82,9 +79,9 @@ class ScrapePrices:
                     )
                 )
                 if products_by_reference_id:
-                    for product in products_by_reference_id:
-                        price = self.price_repo.get_prices_by_product_id(product["id"])
-                        price[0]["product"] = product
+                    for _product in products_by_reference_id:
+                        price = self.price_repo.get_prices_by_product_id(_product["id"])
+                        price[0]["product"] = _product
                         price[0]["store"] = store
                         scraped_data.append(price[0])
                     return scraped_data
@@ -111,9 +108,9 @@ class ScrapePrices:
                     )
                 )
                 if products_by_reference_id:
-                    for product in products_by_reference_id:
-                        price = self.price_repo.get_prices_by_product_id(product["id"])
-                        price[0]["product"] = product
+                    for _product in products_by_reference_id:
+                        price = self.price_repo.get_prices_by_product_id(_product["id"])
+                        price[0]["product"] = _product
                         price[0]["store"] = store
                         scraped_data.append(price[0])
                     return scraped_data
@@ -184,7 +181,7 @@ class ScrapePrices:
             product_update = self.product_repo.update_product_by_name(
                 data["name"], data
             )
-            print(product_update)
+            # print(product_update)
 
             self.price_repo.update_price(
                 product_update["id"],
@@ -195,7 +192,7 @@ class ScrapePrices:
                     "unit": price["unit"],
                 },
             )
-            print(data)
+            # print(data)
         else:
             price = data["price"]
             del data["price"]
@@ -210,7 +207,7 @@ class ScrapePrices:
                     "unit": price["unit"],
                 }
             )
-            print(data)
+            # print(data)
 
 
 """

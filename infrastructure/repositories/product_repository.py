@@ -76,7 +76,7 @@ class ProductRepository:
                 detail=f"Erreur lors de la récupération du produit par son image url : {e}",
             )
 
-    def update_product_by_name(self, name: str, updates: dict):
+    def update_product_by_name(self, name: str, store_id: str, updates: dict):
         """
         Met à jour un produit existant en utilisant son nom.
         """
@@ -85,6 +85,7 @@ class ProductRepository:
                 self.supabase.table("products")
                 .update(updates)
                 .eq("name", name)
+                .eq("store_id", store_id)
                 .execute()
             )
             if response.data:
@@ -116,9 +117,6 @@ class ProductRepository:
             )
 
     def get_product_by_name_by_store_id(self, name: str, store_id: str):
-        """
-        Supprime un produit par son nom.
-        """
         try:
             response = (
                 self.supabase.table("products")
@@ -128,13 +126,13 @@ class ProductRepository:
                 .execute()
             )
             if response.data:
-                print("Produit supprimé :", response.data)
+                print("Produit récupéré :", response.data)
                 return response.data[0]
             return []
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Erreur lors de la suppréssion du produit par son nom : {e}",
+                detail=f"Erreur lors de la récupération du produit par son nom : {e}",
             )
 
     def get_product_by_reference_id(self, reference_id: str):
@@ -166,6 +164,7 @@ class ProductRepository:
                 .select("*")
                 .eq("reference_id", reference_id)
                 .eq("store_id", store_id)
+                .order("created_at", desc=False)
                 .execute()
             )
             if response.data:
