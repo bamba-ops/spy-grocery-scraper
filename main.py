@@ -2,7 +2,8 @@ from utils import setup_logging, logger
 from infrastructure.repositories.product_repository import ProductRepository
 from infrastructure.repositories.store_repository import StoreRepository
 from infrastructure.repositories.price_repository import PriceRepository
-from infrastructure.playwright.scraper import PlaywrightScraper
+
+# from infrastructure.playwright.scraper import PlaywrightScraper
 from infrastructure.beautifulsoup.scraper import Scraper
 from application.use_cases.scrape_prices import ScrapePrices
 from infrastructure.api.supabase_connexion import SupabaseConnection
@@ -18,6 +19,7 @@ app.include_router(scrape_router, prefix="/api/v1")
 @app.get("/")
 def read_root():
     return {"message": "Scraper API is running!"}
+
 
 """
 def main():
