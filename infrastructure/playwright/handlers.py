@@ -22,16 +22,21 @@ def handle_standardize_units(data):
     Convertit les prix dans des unités standardisées (kg, L, unité).
     """
     for item in data:
-        if "g" in item["unit"].lower():
-            value_in_grams = extract_number_from_string(item["unit"])
-            item["price"] = (item["price"] / value_in_grams) * 1000  # Convertir en kg
-            item["unit"] = "kg"
-        elif "ml" in item["unit"].lower():
-            value_in_ml = extract_number_from_string(item["unit"])
-            item["price"] = (item["price"] / value_in_ml) * 1000  # Convertir en ml
-            item["unit"] = "L"
-        elif item["unit"] == "kg" or item["unit"] == "L":
-            pass  # Pas besoin de conversion
+        if item["unit"] != None:
+            if "g" in item["unit"].lower():
+                value_in_grams = extract_number_from_string(item["unit"])
+                item["price"] = (
+                    item["price"] / value_in_grams
+                ) * 1000  # Convertir en kg
+                item["unit"] = "kg"
+            elif "ml" in item["unit"].lower():
+                value_in_ml = extract_number_from_string(item["unit"])
+                item["price"] = (item["price"] / value_in_ml) * 1000  # Convertir en ml
+                item["unit"] = "L"
+            elif item["unit"] == "kg" or item["unit"] == "L":
+                pass  # Pas besoin de conversion
+        else:
+            item["unit"] = None
     return data
 
 
@@ -54,7 +59,150 @@ def handle_extract_unit_and_value(input_string):
 
 
 def handle_clean_text(text):
+
     return re.sub(r"\s+", " ", text).strip()
+
+
+def extraire_prix_iga(string_prix):
+    """
+    Extrait le prix d'une chaîne contenant un prix formaté (par exemple, '5,99 $')
+    et le transforme en float.
+
+    :param prix_string: str, la chaîne contenant le prix
+    :return: float, le prix converti
+    """
+    # Utiliser une expression régulière pour extraire le nombre avec un point ou une virgule
+    match = re.search(r"\d+[.,]?\d*", string_prix)
+    if match:
+        try:
+            # Remplacer la virgule par un point pour le format décimal et convertir en float
+            prix_numerique = match.group(0).replace(",", ".")
+            return float(prix_numerique)
+        except ValueError:
+            return None
+    return None
+
+
+def clean_name_list(names):
+    """
+    Cleans a list of strings by removing numbers, single-character words,
+    specific units ('mL', 'L', '%', 'g'), and properly handling parts before and after a comma.
+
+    Parameters:
+    names (list of str): The list of strings to be cleaned.
+
+    Returns:
+    list of str: The list of cleaned strings.
+    """
+
+    def clean_part(text):
+        # Remove numbers using regex
+        text_without_numbers = re.sub(r"\d+", "", text)
+        # Remove specific units: 'mL', 'L', '%', 'g'
+        units_to_remove = {"mL", "L", "%", "g"}
+        words = text_without_numbers.split()
+        words_without_units = [word for word in words if word not in units_to_remove]
+        # Remove single-character words
+        cleaned_words = [word for word in words_without_units if len(word) > 1]
+        # Join the words back into a string
+        cleaned_text = " ".join(cleaned_words)
+        return cleaned_text
+
+    def clean_name(text):
+        if "," in text:
+            parts = text.split(",", 1)
+            before = clean_part(parts[0])
+            after = clean_part(parts[1])
+            # Combine only if both parts are non-empty
+            if before and after:
+                return f"{before}, {after}"
+            elif before:
+                return before
+            elif after:
+                return after
+            else:
+                return ""
+        else:
+            # No comma, clean the entire string
+            return clean_part(text)
+
+    # Apply the cleaning function to each string in the list
+    cleaned_names = [clean_name(name) for name in names]
+
+    return cleaned_names
+
+
+def clean_name_list_2(names):
+    """
+    Cleans a list of strings by removing numbers, single-character words,
+    specific units ('mL', 'L', '%', 'g'), and everything after a comma.
+
+    Parameters:
+    names (list of str): The list of strings to be cleaned.
+
+    Returns:
+    list of str: The list of cleaned strings.
+    """
+
+    def clean_name(text):
+        # Split at the first comma and take the part before it
+        if "," in text:
+            text_before_comma = text.split(",", 1)[0]
+        else:
+            text_before_comma = text
+        # Remove numbers using regex
+        text_without_numbers = re.sub(r"\d+", "", text_before_comma)
+        # Split the text into words
+        words = text_without_numbers.split()
+        # Remove specific units: 'mL', 'L', '%', 'g'
+        units_to_remove = {"mL", "L", "%", "g"}
+        words_without_units = [word for word in words if word not in units_to_remove]
+        # Remove single-character words
+        cleaned_words = [word for word in words_without_units if len(word) > 1]
+        # Join the words back into a string
+        cleaned_text = " ".join(cleaned_words)
+        return cleaned_text
+
+    # Apply the cleaning function to each string in the list
+    cleaned_names = [clean_name(name) for name in names]
+
+    return cleaned_names
+
+
+def extraire_prix_de_liste_superc(liste_strings):
+    """
+    Extrait les prix d'une liste de chaînes, gère les cas comme '2 / 3,98 $',
+    et retourne une liste contenant des float ou des sous-listes.
+
+    :param liste_strings: list, liste de chaînes contenant des prix
+    :return: list, liste contenant les prix extraits ou None pour les éléments invalides
+    """
+    resultat = []
+    for item in liste_strings:
+        # Vérifier si la chaîne contient un format '2 / 3,98 $'
+        if "/" in item:
+            match = re.match(r"(\d+)\s*/\s*([\d,]+)\s*\$", item)
+            if match:
+                try:
+                    quantite = int(match.group(1))
+                    prix_total = float(match.group(2).replace(",", "."))
+                    resultat.append([quantite, prix_total])
+                except ValueError:
+                    resultat.append(None)
+            else:
+                resultat.append(None)
+        else:
+            # Pour les autres formats, extraire le prix comme float
+            match = re.search(r"[\d,]+", item)
+            if match:
+                try:
+                    prix = float(match.group(0).replace(",", "."))
+                    resultat.append(prix)
+                except ValueError:
+                    resultat.append(None)
+            else:
+                resultat.append(None)
+    return resultat
 
 
 def wait_for_element(page, element_selector):
@@ -98,6 +246,8 @@ def handle_extract_prices(data):
         elif "ch." in item:  # Prix fixes sans unité
             fixed_price = float(re.search(r"(\d+,\d+)", item).group().replace(",", "."))
             cleaned_data.append({"price": fixed_price, "unit": "unité"})
+        else:
+            cleaned_data.append({"price": None, "unit": None})
     return cleaned_data
 
 
@@ -219,3 +369,24 @@ def handle_standardize_units_2(data):
             item["unit"] = "L"
 
     return data
+
+
+def extraire_prix_un_metro(liste_prix):
+    prix_extraits = []
+
+    for element in liste_prix:
+        # Vérifie si l'élément contient une barre '/'
+        match = re.search(r"(\d+)\s*/\s*([\d,]+)\s*\$", element)
+        if match:
+            # Si une barre est présente, on prend les valeurs avant et après la barre
+            quantite = match.group(1)
+            prix = float(match.group(2).replace(",", "."))
+            prix_extraits.append([quantite, prix])  # Ajouter comme une liste imbriquée
+        else:
+            # Sinon, extrait un prix simple comme "y,yy $"
+            match_simple = re.search(r"([\d,]+)\s*\$", element)
+            if match_simple:
+                prix = float(match_simple.group(1).replace(",", "."))
+                prix_extraits.append(prix)
+
+    return prix_extraits

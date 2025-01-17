@@ -13,6 +13,10 @@ from ..playwright.handlers import (
     handle_standardize_units_metro,
     handle_extract_prices_metro_2,
     handle_standardize_units_2,
+    extraire_prix_un_metro,
+    extraire_prix_iga,
+    extraire_prix_de_liste_superc,
+    clean_name_list,
 )
 
 
@@ -71,7 +75,7 @@ class Scraper(IScraper):
             try:
                 html_content = ScrapingBee.get_html_content_from_url(
                     URL_MAIN,
-                    "#body_0_main_1_GrocerySearch_TemplateResult_SearchResultListView_ctrl0_ItemTemplatePanel_0 > div > div.item-product > div > div:nth-child(1) > div",
+                    "#body_0_main_1_GrocerySearch_TemplateResult_SearchResultListView_MansoryPanel",
                 )
             except Exception as e:
                 raise HTTPException(
@@ -106,29 +110,44 @@ class Scraper(IScraper):
         PAGE_NUMBER = number_of_page
         i = 1
         scraped_data = []
-        URL_MAIN = "https://www.metro.ca/epicerie-en-ligne"
-        URL_SEARCH_PAGE_1 = "/recherche?filter={product}"
-        URL_SEARCH_ALL_PAGE = "/recherche-page-{i}?&filter={product}"
+        if product_name != "all":
+            URL_MAIN = "https://www.metro.ca/epicerie-en-ligne"
+            URL_SEARCH_PAGE_1 = "/recherche?filter={product}"
+            URL_SEARCH_ALL_PAGE = "/recherche-page-{i}?&filter={product}"
+        else:
+            URL_MAIN = "https://www.metro.ca/epicerie-en-ligne/recherche-page-{i}"
 
         while i <= PAGE_NUMBER:
 
             try:
-                if i == 1:
-                    scraped_data.extend(
-                        self.extract_info_metro(
-                            ScrapingBee.get_html_content_from_url(
-                                URL_MAIN
-                                + URL_SEARCH_PAGE_1.format(product=product_name),
-                                "#content-temp > div:nth-child(1) > div.product-page-filter > div:nth-child(3) > div",
+                if product_name != "all":
+                    if i == 1:
+                        scraped_data.extend(
+                            self.extract_info_metro(
+                                ScrapingBee.get_html_content_from_url(
+                                    URL_MAIN
+                                    + URL_SEARCH_PAGE_1.format(product=product_name),
+                                    "#content-temp > div:nth-child(1) > div.product-page-filter > div:nth-child(3) > div",
+                                )
                             )
                         )
-                    )
+                    else:
+                        scraped_data.extend(
+                            self.extract_info_metro(
+                                ScrapingBee.get_html_content_from_url(
+                                    URL_MAIN
+                                    + URL_SEARCH_ALL_PAGE.format(
+                                        i=i, product=product_name
+                                    ),
+                                    "#content-temp > div:nth-child(1) > div.product-page-filter > div:nth-child(3) > div",
+                                )
+                            )
+                        )
                 else:
                     scraped_data.extend(
                         self.extract_info_metro(
                             ScrapingBee.get_html_content_from_url(
-                                URL_MAIN
-                                + URL_SEARCH_ALL_PAGE.format(i=i, product=product_name),
+                                URL_MAIN.format(i=i),
                                 "#content-temp > div:nth-child(1) > div.product-page-filter > div:nth-child(3) > div",
                             )
                         )
@@ -139,6 +158,7 @@ class Scraper(IScraper):
                     status_code=500, detail=f"Erreur lors du scrapping : {e}"
                 )
             finally:
+                print(i)
                 i = i + 1
 
         return scraped_data
@@ -197,6 +217,11 @@ class Scraper(IScraper):
                     if produit_html.find("img", class_="fluid")["src"]
                     else ""
                 )
+
+                prix_un = produit_html.find(
+                    "span", class_=["price", "text--strong"]
+                ).get_text(strip=True)
+
                 # prix = produit_html.find('div', class_='text--small').get_text(strip=True)
                 if produit_html.find("div", class_="text--small"):
                     prix = produit_html.find("div", class_="text--small").get_text(
@@ -207,6 +232,9 @@ class Scraper(IScraper):
                         "span", class_=["price", "text--strong"]
                     ).get_text(strip=True)
                     prix = prix + " / " + unite
+
+                # print(prix)
+                # print(prix_un)
 
                 produits_vus.add(
                     nom
@@ -219,6 +247,7 @@ class Scraper(IScraper):
                         "unit": handle_extract_unit_and_value(handle_clean_text(unite)),
                         "image_url": url_image,
                         "price_test": prix,
+                        "price_un": extraire_prix_iga(prix_un),
                     }
                 )
                 prices.append(handle_clean_text(prix))
@@ -226,7 +255,14 @@ class Scraper(IScraper):
         new_prices = handle_standardize_units(handle_extract_prices(prices))
         if len(new_prices) == len(produits):
             for produit, price in zip(produits, new_prices):
-                price["price"] = round(price["price"], 2)
+                if price["price"] != None:
+                    price["price"] = round(price["price"], 2)
+                else:
+                    price["price"] = None
+                price["price_un"] = produit["price_un"]
+                price["is_promo"] = False
+
+                # print(price)
                 data.append(
                     {
                         "name": produit["name"],
@@ -248,6 +284,7 @@ class Scraper(IScraper):
         unit_value = []
         img_src = []
         price_value = []
+        price_un_value = []
         data = []
 
         container = soup.select_one("div.products-search--grid.searchOnlineResults")
@@ -258,6 +295,7 @@ class Scraper(IScraper):
         picture_elements = container.select("picture.defaultable-picture")
         name_elements = container.select("div.content__head")
         price_elements = container.select("div.pricing__secondary-price")
+        price_un_elements = container.select("div.pricing__sale-price")
 
         for name in name_elements:
             _title_unit = name.select_one("a")
@@ -279,8 +317,12 @@ class Scraper(IScraper):
             _price = price.select_one("span")
             if _price:
                 price_value.append(handle_clean_text(_price.text.strip()))
-        if len(price_value) == len(name_value):
-            for name, brand, unit, img, price in zip(
+
+        for price_un in price_un_elements:
+            price_un_value.append(handle_clean_text(price_un.text))
+
+        if len(price_value) == len(name_value) == len(price_un_value):
+            for name, brand, unit, img, price, price_un in zip(
                 name_value,
                 brand_value,
                 unit_value,
@@ -288,20 +330,37 @@ class Scraper(IScraper):
                 handle_standardize_units_metro(
                     handle_extract_prices_metro(price_value)
                 ),
+                extraire_prix_de_liste_superc(price_un_value),
             ):
                 price["price"] = round(price["price"], 2)
-                data.append(
-                    {
-                        "name": name,
-                        "image_url": img,
-                        "brand": brand,
-                        "price": price,
-                        "unit": unit,
-                    }
-                )
+                if isinstance(price_un, list):
+                    price["price_un"] = price_un[1]
+                    price["quantity"] = price_un[0]
+                    price["is_promo"] = True
+                    data.append(
+                        {
+                            "name": name,
+                            "image_url": img,
+                            "brand": brand,
+                            "price": price,
+                            "unit": unit,
+                        }
+                    )
+                else:
+                    price["price_un"] = price_un
+                    price["is_promo"] = False
+                    data.append(
+                        {
+                            "name": name,
+                            "image_url": img,
+                            "brand": brand,
+                            "price": price,
+                            "unit": unit,
+                        }
+                    )
         else:
             pass
-        # print(data)
+        print(data)
         return data
 
     def extract_info_metro(self, html_content):
@@ -313,6 +372,7 @@ class Scraper(IScraper):
         img_src = []
         price_value = []
         data = []
+        price_un_value = []
 
         container = soup.select_one("div.products-search--grid.searchOnlineResults")
         if not container:
@@ -322,6 +382,7 @@ class Scraper(IScraper):
         picture_elements = container.select("picture.defaultable-picture")
         name_elements = container.select("div.content__head")
         price_elements = container.select("div.pricing__secondary-price")
+        price_un_elements = container.select("div.pricing__sale-price")
 
         for name in name_elements:
             _title_unit = name.select_one("a")
@@ -345,35 +406,48 @@ class Scraper(IScraper):
             # print(_price.text.strip())
             price_value.append(price.text)
 
-        # print(handle_standardize_units_2(handle_extract_prices_metro_2(price_value)))
+        for price in price_un_elements:
+            price_un_value.append(handle_clean_text(price.text))
 
-        for name, brand, unit, img, price in zip(
-            name_value,
-            brand_value,
-            unit_value,
-            img_src,
-            handle_standardize_units_2(handle_extract_prices_metro_2(price_value)),
-        ):
-            """
-            print(
-                {
-                    "name": name,
-                    "brand": brand,
-                    "unit": unit,
-                    "image_url": img,
-                    "price": price["price"],
-                    "unit_price": price["unit"],
-                }
-            )
-            """
-            data.append(
-                {
-                    "name": name,
-                    "image_url": img,
-                    "brand": brand,
-                    "price": price,
-                    "unit": unit,
-                }
-            )
-        # print(data)
+        price_un_value_extrait = extraire_prix_un_metro(price_un_value)
+
+        for price, price_extrait in zip(price_un_value, price_un_value_extrait):
+            print(f"Price: {price}\nPrice Extrait: {price_extrait}")
+
+        if len(price_value) == len(price_un_value_extrait):
+            for name, brand, unit, img, price, price_extrait in zip(
+                clean_name_list(name_value),
+                brand_value,
+                unit_value,
+                img_src,
+                handle_standardize_units_2(handle_extract_prices_metro_2(price_value)),
+                price_un_value_extrait,
+            ):
+                print(price)
+                if isinstance(price_extrait, list):
+                    price["price_un"] = price_extrait[1]
+                    price["quantity"] = price_extrait[0]
+                    price["is_promo"] = True
+                    data.append(
+                        {
+                            "name": name,
+                            "image_url": img,
+                            "brand": brand,
+                            "price": price,
+                            "unit": unit,
+                        }
+                    )
+                else:
+                    price["price_un"] = price_extrait
+                    price["is_promo"] = False
+                    data.append(
+                        {
+                            "name": name,
+                            "image_url": img,
+                            "brand": brand,
+                            "price": price,
+                            "unit": unit,
+                        }
+                    )
+            print(data)
         return data

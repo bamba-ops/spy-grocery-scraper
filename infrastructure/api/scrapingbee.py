@@ -30,7 +30,7 @@ class ScrapingBee:
                 params["wait_for"] = wait_for
 
             response = requests.get(
-                url="https://app.scrapingbee.com/api/v1", params=params, timeout=10
+                url="https://app.scrapingbee.com/api/v1", params=params, timeout=15
             )
 
             # print('Response HTTP Status Code: ', response.status_code)
