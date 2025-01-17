@@ -1,4 +1,5 @@
 # Scraping
+greenlet==2.0.2
 playwright==1.37.0
 lxml==4.9.3
 beautifulsoup4==4.12.2
