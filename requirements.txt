@@ -1,5 +1,4 @@
 # Scraping
-greenlet==2.0.2
 playwright==1.37.0
 lxml==4.9.3
 beautifulsoup4==4.12.2
@@ -10,7 +9,10 @@ python-dotenv==1.0.0
 
 # API et Web
 fastapi==0.104.1
-#uvicorn==0.23.2
+#uvicorn==0.23.2  # si vous n'en avez pas besoin, laissez commenté
 
 # JSON et manipulation des fichiers
 jsonschema==4.19.0
+
+# Forcer greenlet
+greenlet==2.0.2
