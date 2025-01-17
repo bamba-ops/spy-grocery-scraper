@@ -1,3 +1,4 @@
+'''
 from playwright.sync_api import sync_playwright
 from .handlers import handle_dialog, handle_banner, wait_for_element, handle_clean_text, handle_extract_unit_and_value, handle_standardize_units, handle_extract_prices
 from utils import load_user_agents
@@ -101,3 +102,4 @@ class PlaywrightScraper:
                 })
 
         return data
+'''
